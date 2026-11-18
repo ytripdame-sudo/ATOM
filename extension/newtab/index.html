@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ATOM</title>
+    <link rel="stylesheet" href="../ui/tokens.css" />
+    <link rel="stylesheet" href="newtab.css" />
+  </head>
+  <body>
+    <div class="orb" aria-hidden="true"></div>
+
+    <svg class="sprite" aria-hidden="true" width="0" height="0" focusable="false">
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6" /></symbol>
+    </svg>
+
+    <main class="stage">
+      <svg class="mark stage__mark" viewBox="0 0 64 64" data-spin aria-hidden="true">
+        <ellipse class="mark__ring mark__ring--a" cx="32" cy="32" rx="25" ry="10" />
+        <g transform="rotate(60 32 32)">
+          <ellipse class="mark__ring mark__ring--b" cx="32" cy="32" rx="25" ry="10" />
+        </g>
+        <circle class="mark__core" cx="32" cy="32" r="4" />
+      </svg>
+
+      <p class="word">ATOM</p>
+      <h1 class="greet" id="greet">Good evening</h1>
+      <p class="sub">Ask anything. It opens in your sidebar.</p>
+
+      <form class="ask" id="ask">
+        <input
+          id="q"
+          type="text"
+          placeholder="Ask ATOM anything…"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          aria-label="Ask ATOM anything"
+        />
+        <button class="ask__go" type="submit" aria-label="Ask ATOM">
+          <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
+        </button>
+      </form>
+
+      <p class="foot" id="foot"><kbd>Alt</kbd><kbd>Shift</kbd><kbd>A</kbd> opens the sidebar</p>
+    </main>
+
+    <script type="module" src="newtab.js"></script>
+  </body>
+</html>

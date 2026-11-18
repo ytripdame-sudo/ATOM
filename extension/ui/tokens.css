@@ -1,0 +1,232 @@
+/**
+ * ATOM design tokens + the base layer both surfaces share.
+ * Two themes, one accent, hairlines over shadows. Keep it small.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --font: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+  --mono: "Cascadia Code", "Cascadia Mono", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --bg: #0a0b0e;
+  --bg-2: #0f1116;
+  --surface: rgba(255, 255, 255, 0.032);
+  --surface-2: rgba(255, 255, 255, 0.048);
+  --surface-3: rgba(255, 255, 255, 0.075);
+  --line: rgba(255, 255, 255, 0.075);
+  --line-2: rgba(255, 255, 255, 0.13);
+  --fg: #e9ecf2;
+  --fg-2: #a4acba;
+  --fg-3: #6d7583;
+
+  --accent: #8f90ff;
+  --accent-deep: #6a6bf0;
+  --accent-tint: rgba(143, 144, 255, 0.12);
+  --accent-line: rgba(143, 144, 255, 0.45);
+  --accent-glow: rgba(143, 144, 255, 0.1);
+
+  --ok: #5fd8a5;
+  --warn: #e7bd68;
+  --bad: #ff9090;
+  --bad-tint: rgba(255, 120, 120, 0.07);
+  --bad-line: rgba(255, 120, 120, 0.24);
+
+  --bubble: rgba(255, 255, 255, 0.055);
+  --code-bg: rgba(255, 255, 255, 0.04);
+  --bar-bg: rgba(10, 11, 14, 0.78);
+  --sheet-bg: #111318;
+  --scrim: rgba(4, 5, 8, 0.55);
+  --shadow: 0 14px 36px -20px rgba(0, 0, 0, 0.9);
+
+  --r-sm: 9px;
+  --r-md: 13px;
+  --r-lg: 17px;
+  --ease: cubic-bezier(0.22, 0.78, 0.28, 1);
+  --spring: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #fcfcfd;
+  --bg-2: #ffffff;
+  --surface: rgba(16, 20, 28, 0.03);
+  --surface-2: rgba(16, 20, 28, 0.045);
+  --surface-3: rgba(16, 20, 28, 0.07);
+  --line: rgba(16, 20, 28, 0.1);
+  --line-2: rgba(16, 20, 28, 0.16);
+  --fg: #12151c;
+  --fg-2: #4b5261;
+  --fg-3: #7c8494;
+
+  --accent: #5b5ce8;
+  --accent-deep: #4a4bd6;
+  --accent-tint: rgba(91, 92, 232, 0.09);
+  --accent-line: rgba(91, 92, 232, 0.4);
+  --accent-glow: rgba(91, 92, 232, 0.1);
+
+  --ok: #12996b;
+  --warn: #a8761b;
+  --bad: #c93b3b;
+  --bad-tint: rgba(201, 59, 59, 0.06);
+  --bad-line: rgba(201, 59, 59, 0.22);
+
+  --bubble: rgba(16, 20, 28, 0.055);
+  --code-bg: rgba(16, 20, 28, 0.045);
+  --bar-bg: rgba(252, 252, 253, 0.82);
+  --sheet-bg: #ffffff;
+  --scrim: rgba(20, 24, 32, 0.28);
+  --shadow: 0 14px 34px -22px rgba(16, 20, 28, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.28s var(--ease), color 0.28s var(--ease);
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--accent);
+}
+
+::selection {
+  background: var(--accent-tint);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 2px;
+}
+
+/* Scrollbars: thin, quiet, only visible when you need them. */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 99px;
+  background-clip: content-box;
+  background-color: var(--line-2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--fg-3);
+}
+
+/* The ATOM mark: two rings and a nucleus. */
+.mark {
+  display: block;
+  flex: none;
+  color: var(--accent);
+  overflow: visible;
+}
+
+.mark__ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.4;
+  opacity: 0.82;
+  transform-box: view-box;
+  transform-origin: center;
+}
+
+.mark[data-spin] .mark__ring--a {
+  animation: mark-spin 22s linear infinite;
+}
+
+.mark[data-spin] .mark__ring--b {
+  animation: mark-spin 30s linear infinite reverse;
+}
+
+.mark__core {
+  fill: currentColor;
+}
+
+.icon {
+  display: block;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes mark-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

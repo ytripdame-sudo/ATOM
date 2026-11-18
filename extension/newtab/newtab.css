@@ -1,0 +1,160 @@
+/**
+ * New Tab. One thing on the page: a question. It goes to the sidebar.
+ */
+
+body {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* A single drifting light. Transform-only, so it never touches layout. */
+.orb {
+  position: fixed;
+  top: -150px;
+  left: 50%;
+  width: 620px;
+  height: 470px;
+  border-radius: 50%;
+  background: radial-gradient(50% 50% at 50% 50%, var(--accent-tint), transparent 72%);
+  filter: blur(22px);
+  opacity: 0.95;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: drift 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes drift {
+  from {
+    transform: translate(-50%, 0) scale(1);
+  }
+  to {
+    transform: translate(-46%, 26px) scale(1.06);
+  }
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  width: min(88vw, 540px);
+  padding-bottom: 11vh;
+  text-align: center;
+}
+
+.stage__mark {
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 22px;
+  animation: fade 0.6s var(--ease) both;
+}
+
+.word {
+  margin: 0;
+  color: var(--fg-3);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  text-transform: uppercase;
+  animation: rise 0.5s var(--ease) 0.05s both;
+}
+
+.greet {
+  margin: 10px 0 0;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  animation: rise 0.55s var(--ease) 0.1s both;
+}
+
+.sub {
+  margin: 9px 0 0;
+  color: var(--fg-3);
+  font-size: 13px;
+  animation: rise 0.55s var(--ease) 0.16s both;
+}
+
+.ask {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 30px;
+  padding: 6px 6px 6px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+  background: var(--surface);
+  transition: border-color 0.2s var(--ease), box-shadow 0.26s var(--ease), background 0.2s var(--ease);
+  animation: rise 0.6s var(--ease) 0.22s both;
+}
+
+.ask:focus-within {
+  border-color: var(--accent-line);
+  background: var(--surface-2);
+  box-shadow: 0 0 0 4px var(--accent-glow), 0 18px 40px -30px rgba(0, 0, 0, 0.9);
+}
+
+.ask input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 0;
+  border: 0;
+  background: none;
+  font-size: 14px;
+  outline: none;
+}
+
+.ask input::placeholder {
+  color: var(--fg-3);
+}
+
+.ask__go {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: linear-gradient(155deg, var(--accent), var(--accent-deep));
+  box-shadow: 0 8px 20px -13px var(--accent-deep);
+  color: #fff;
+  transition: transform 0.14s var(--ease), filter 0.18s;
+}
+
+.ask__go:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.ask__go:active {
+  transform: scale(0.93);
+}
+
+.foot {
+  margin: 17px 0 0;
+  color: var(--fg-3);
+  font-size: 11px;
+  animation: rise 0.6s var(--ease) 0.28s both;
+}
+
+kbd {
+  display: inline-block;
+  margin: 0 1.5px;
+  padding: 1.5px 5px;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--fg-2);
+  font-family: var(--mono);
+  font-size: 9.5px;
+}

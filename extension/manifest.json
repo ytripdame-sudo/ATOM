@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "ATOM",
+  "short_name": "ATOM",
+  "version": "0.2.0",
+  "description": "A private assistant in your sidebar. Ask anything, read the page you're on, and act on it when you say so.",
+  "minimum_chrome_version": "116",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "ATOM",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel/index.html"
+  },
+  "chrome_url_overrides": {
+    "newtab": "newtab/index.html"
+  },
+  "permissions": ["storage", "sidePanel", "tabs", "scripting"],
+  "host_permissions": ["https://api.groq.com/*"],
+  "optional_host_permissions": ["*://*/*"],
+  "commands": {
+    "open-atom": {
+      "suggested_key": {
+        "default": "Alt+Shift+A"
+      },
+      "description": "Open ATOM in the side panel"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
