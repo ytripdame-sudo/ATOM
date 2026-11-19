@@ -1,83 +1,117 @@
 /**
  * ATOM design tokens + the base layer both surfaces share.
- * Two themes, one accent, hairlines over shadows. Keep it small.
+ * Colours are channel triplets, the way Bonjourr does it: a tint is one alpha
+ * away, so changing a triplet moves the fill, the hairline and the glow together.
+ * Everything else is a scale — spacing, type, radii, motion — declared once.
  */
 
 :root {
   color-scheme: dark;
 
+  /* Type: one text stack, one mono, five sizes, one line height. */
   --font: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
   --mono: "Cascadia Code", "Cascadia Mono", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --fs-xs: 10px;
+  --fs-sm: 11.5px;
+  --fs-md: 12.5px;
+  --fs-base: 13px;
+  --fs-lg: 13.5px;
+  --lh: 1.58;
 
-  --bg: #0a0b0e;
-  --bg-2: #0f1116;
-  --surface: rgba(255, 255, 255, 0.032);
-  --surface-2: rgba(255, 255, 255, 0.048);
-  --surface-3: rgba(255, 255, 255, 0.075);
-  --line: rgba(255, 255, 255, 0.075);
-  --line-2: rgba(255, 255, 255, 0.13);
-  --fg: #e9ecf2;
-  --fg-2: #a4acba;
-  --fg-3: #6d7583;
+  /* Space: a 4px rhythm. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
 
-  --accent: #8f90ff;
-  --accent-deep: #6a6bf0;
-  --accent-tint: rgba(143, 144, 255, 0.12);
-  --accent-line: rgba(143, 144, 255, 0.45);
-  --accent-glow: rgba(143, 144, 255, 0.1);
+  /* Colour: channels, not colours. */
+  --bg: #08090c;
+  --bg-2: #0c0e13;
+  --fg-rgb: 233 236 242;
+  --fg-2-rgb: 166 174 188;
+  --fg-3-rgb: 112 120 134;
+  --fg: rgb(var(--fg-rgb));
+  --fg-2: rgb(var(--fg-2-rgb));
+  --fg-3: rgb(var(--fg-3-rgb));
 
-  --ok: #5fd8a5;
-  --warn: #e7bd68;
-  --bad: #ff9090;
-  --bad-tint: rgba(255, 120, 120, 0.07);
-  --bad-line: rgba(255, 120, 120, 0.24);
+  --surface: rgb(255 255 255 / 0.035);
+  --surface-2: rgb(255 255 255 / 0.055);
+  --surface-3: rgb(255 255 255 / 0.085);
+  --line: rgb(255 255 255 / 0.075);
+  --line-2: rgb(255 255 255 / 0.135);
 
-  --bubble: rgba(255, 255, 255, 0.055);
-  --code-bg: rgba(255, 255, 255, 0.04);
-  --bar-bg: rgba(10, 11, 14, 0.78);
-  --sheet-bg: #111318;
-  --scrim: rgba(4, 5, 8, 0.55);
-  --shadow: 0 14px 36px -20px rgba(0, 0, 0, 0.9);
+  --accent-rgb: 141 133 255;
+  --accent: rgb(var(--accent-rgb));
+  --accent-deep: #6a5ceb;
+  --accent-tint: rgb(var(--accent-rgb) / 0.12);
+  --accent-line: rgb(var(--accent-rgb) / 0.42);
+  --accent-glow: rgb(var(--accent-rgb) / 0.13);
 
-  --r-sm: 9px;
-  --r-md: 13px;
-  --r-lg: 17px;
+  --ok-rgb: 95 216 165;
+  --warn-rgb: 231 189 104;
+  --bad-rgb: 255 144 144;
+  --ok: rgb(var(--ok-rgb));
+  --warn: rgb(var(--warn-rgb));
+  --bad: rgb(var(--bad-rgb));
+  --bad-tint: rgb(var(--bad-rgb) / 0.08);
+  --bad-line: rgb(var(--bad-rgb) / 0.26);
+
+  --bubble: rgb(255 255 255 / 0.055);
+  --code-bg: rgb(255 255 255 / 0.04);
+  --bar-bg: rgb(8 9 12 / 0.72);
+  --sheet-bg: #0e1015;
+  --scrim: rgb(3 4 7 / 0.6);
+  --shadow: 0 18px 44px -24px rgb(0 0 0 / 0.9);
+
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 26px;
+  --r-pill: 999px;
+
+  /* Motion: one out-ease, one spring, one pop; three durations. */
+  --dur-1: 120ms;
+  --dur-2: 220ms;
+  --dur-3: 420ms;
   --ease: cubic-bezier(0.22, 0.78, 0.28, 1);
   --spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring-pop: cubic-bezier(0.34, 1.5, 0.5, 1);
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --bg: #fcfcfd;
+  --bg: #f7f8fa;
   --bg-2: #ffffff;
-  --surface: rgba(16, 20, 28, 0.03);
-  --surface-2: rgba(16, 20, 28, 0.045);
-  --surface-3: rgba(16, 20, 28, 0.07);
-  --line: rgba(16, 20, 28, 0.1);
-  --line-2: rgba(16, 20, 28, 0.16);
-  --fg: #12151c;
-  --fg-2: #4b5261;
-  --fg-3: #7c8494;
+  --fg-rgb: 18 21 28;
+  --fg-2-rgb: 75 82 97;
+  --fg-3-rgb: 124 132 148;
 
-  --accent: #5b5ce8;
-  --accent-deep: #4a4bd6;
-  --accent-tint: rgba(91, 92, 232, 0.09);
-  --accent-line: rgba(91, 92, 232, 0.4);
-  --accent-glow: rgba(91, 92, 232, 0.1);
+  --surface: rgb(16 20 28 / 0.032);
+  --surface-2: rgb(16 20 28 / 0.05);
+  --surface-3: rgb(16 20 28 / 0.075);
+  --line: rgb(16 20 28 / 0.1);
+  --line-2: rgb(16 20 28 / 0.16);
 
-  --ok: #12996b;
-  --warn: #a8761b;
-  --bad: #c93b3b;
-  --bad-tint: rgba(201, 59, 59, 0.06);
-  --bad-line: rgba(201, 59, 59, 0.22);
+  --accent-rgb: 88 86 230;
+  --accent-deep: #4644cf;
+  --accent-tint: rgb(var(--accent-rgb) / 0.09);
+  --accent-line: rgb(var(--accent-rgb) / 0.38);
+  --accent-glow: rgb(var(--accent-rgb) / 0.1);
 
-  --bubble: rgba(16, 20, 28, 0.055);
-  --code-bg: rgba(16, 20, 28, 0.045);
-  --bar-bg: rgba(252, 252, 253, 0.82);
+  --ok-rgb: 18 153 107;
+  --warn-rgb: 168 118 27;
+  --bad-rgb: 201 59 59;
+  --bad-tint: rgb(var(--bad-rgb) / 0.06);
+  --bad-line: rgb(var(--bad-rgb) / 0.22);
+
+  --bubble: rgb(16 20 28 / 0.055);
+  --code-bg: rgb(16 20 28 / 0.045);
+  --bar-bg: rgb(247 248 250 / 0.78);
   --sheet-bg: #ffffff;
-  --scrim: rgba(20, 24, 32, 0.28);
-  --shadow: 0 14px 34px -22px rgba(16, 20, 28, 0.4);
+  --scrim: rgb(20 24 32 / 0.28);
+  --shadow: 0 18px 40px -26px rgb(16 20 28 / 0.4);
 }
 
 * {
@@ -96,12 +130,12 @@ body {
 body {
   margin: 0;
   font-family: var(--font);
-  font-size: 13px;
+  font-size: var(--fs-base);
+  line-height: var(--lh);
   color: var(--fg);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  transition: background-color 0.28s var(--ease), color 0.28s var(--ease);
 }
 
 button {
@@ -220,6 +254,36 @@ a {
   }
 }
 
+/*
+ * Performance mode: the same interface with nothing moving. Only the motion and
+ * the decorative glows go; colours, states and layout are untouched.
+ */
+:root[data-perf="performance"] *,
+:root[data-perf="performance"] *::before,
+:root[data-perf="performance"] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+:root[data-perf="performance"] .app::before,
+:root[data-perf="performance"] .app::after,
+:root[data-perf="performance"] .intro::before {
+  display: none;
+}
+
+/* A still frame is what a wallpaper is here; blurring it is not worth a repaint. */
+:root[data-perf="performance"] .wall__layer {
+  filter: none !important;
+}
+
+/* The spinner is gone, so the busy key shows as a filled dot in the same colour. */
+:root[data-perf="performance"] .key-item[data-state="busy"] .key-item__dot {
+  background: var(--warn);
+  border-color: var(--warn);
+}
+
+/* Short, cheap, and gone entirely when the system asks for stillness. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

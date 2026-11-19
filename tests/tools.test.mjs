@@ -1,18 +1,90 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { TOOL_DEFINITIONS, TOOL_NAMES, parseArguments } from '../extension/lib/agent/tools.js';
+import {
+  AGENT_TOOLS,
+  CAPTURE_TOOLS,
+  MEMORY_TOOLS,
+  TAB_TOOLS,
+  TOOL_DEFINITIONS,
+  TOOL_NAMES,
+  WEB_TOOLS,
+  parseArguments,
+} from '../extension/lib/agent/tools.js';
 import { describeAction, formatPageForModel, originPattern, hostOf } from '../extension/lib/page.js';
 
 test('every tool has a name, description and object schema', () => {
-  for (const tool of TOOL_DEFINITIONS) {
+  for (const tool of [...TOOL_DEFINITIONS, ...WEB_TOOLS, ...CAPTURE_TOOLS, ...MEMORY_TOOLS, ...TAB_TOOLS]) {
     assert.equal(tool.type, 'function');
     assert.equal(typeof tool.function.name, 'string');
     assert.ok(tool.function.description.length > 20, tool.function.name);
     assert.equal(tool.function.parameters.type, 'object');
     assert.ok(tool.function.parameters.properties, tool.function.name);
   }
-  assert.deepEqual([...TOOL_NAMES].sort(), ['click', 'navigate', 'read_page', 'scroll', 'select_option', 'type_text']);
+  assert.deepEqual([...TOOL_NAMES].sort(), [
+    'browser',
+    'click',
+    'list_tabs',
+    'navigate',
+    'plan',
+    'press_key',
+    'read_console',
+    'read_network',
+    'read_page',
+    'remember',
+    'run_js',
+    'screenshot',
+    'scroll',
+    'select_option',
+    'show_image',
+    'tabs',
+    'type_text',
+    'web_search',
+  ]);
+});
+
+test('the page tools accept a tab id, so one turn can work across tabs', () => {
+  for (const name of ['read_page', 'click', 'type_text', 'select_option', 'scroll', 'navigate']) {
+    const tool = TOOL_DEFINITIONS.find((entry) => entry.function.name === name);
+    assert.deepEqual(tool.function.parameters.properties.tab?.type, ['integer', 'null'], name);
+  }
+
+  assert.deepEqual(TAB_TOOLS.map((tool) => tool.function.name), ['list_tabs']);
+  const tabs = AGENT_TOOLS.find((tool) => tool.function.name === 'tabs');
+  assert.deepEqual(tabs.function.parameters.properties.action.enum, ['open', 'close', 'switch', 'group']);
+  assert.deepEqual(tabs.function.parameters.properties.tab.type, ['integer', 'null']);
+  assert.deepEqual(MEMORY_TOOLS.map((tool) => tool.function.name), ['remember']);
+  assert.match(MEMORY_TOOLS[0].function.description, /approves it before it is stored/);
+});
+
+test('web lookups are their own set, and say what they cannot do', () => {
+  assert.deepEqual(WEB_TOOLS.map((tool) => tool.function.name).sort(), ['show_image', 'web_search']);
+
+  const search = WEB_TOOLS.find((tool) => tool.function.name === 'web_search');
+  // Stage 9: the provider is configured, and depth reads pages instead of
+  // pretending snippets are the whole web.
+  assert.match(search.function.description, /ranked results/);
+  assert.match(search.function.description, /never guess an address/);
+  assert.match(search.function.description, /depth true/);
+  assert.ok(search.function.parameters.properties.depth, 'depth is offered');
+  assert.deepEqual(search.function.parameters.required, ['query']);
+
+  const pictures = WEB_TOOLS.find((tool) => tool.function.name === 'show_image');
+  assert.match(pictures.function.description, /openly licensed/i);
+  assert.deepEqual(pictures.function.parameters.required, ['query']);
+});
+
+test('diagnostics are a separate set that only exists while attached', () => {
+  const pageNames = TOOL_DEFINITIONS.map((tool) => tool.function.name);
+  assert.deepEqual(pageNames.sort(), ['click', 'navigate', 'read_page', 'scroll', 'select_option', 'type_text']);
+  assert.equal(CAPTURE_TOOLS.length, 2);
+
+  for (const tool of CAPTURE_TOOLS) {
+    assert.equal(tool.function.parameters.type, 'object');
+    assert.deepEqual(tool.function.parameters.properties, {});
+    assert.match(tool.function.description, /since capture started/i);
+    assert.match(tool.function.description, /reload/i);
+  }
 });
 
 test('arguments parse, and bad arguments are reported not thrown', () => {
@@ -40,6 +112,9 @@ test('action summaries read like sentences', () => {
   assert.equal(describeAction('scroll', { direction: 'down' }), 'Scroll down');
   assert.equal(describeAction('navigate', { url: 'https://example.com/x' }), 'Open example.com');
   assert.equal(describeAction('type_text', { ref: 'e3', text: 'hi' }, { name: 'Search' }), 'Type into “Search”');
+  assert.equal(describeAction('read_console', {}), 'Read the console');
+  assert.equal(describeAction('read_network', {}), 'Read failed requests');
+  assert.equal(describeAction('browser', { action: 'bookmark', url: 'https://example.com/x' }), 'Browser: bookmark example.com');
 });
 
 test('a page description formats into something a model can use', () => {

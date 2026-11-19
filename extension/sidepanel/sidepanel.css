@@ -19,22 +19,63 @@ body {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   height: 100dvh;
-  background: var(--bg);
+  background:
+    radial-gradient(120% 55% at 50% -8%, var(--accent-glow), transparent 72%),
+    var(--bg);
   overflow: hidden;
+  isolation: isolate;
 }
 
-/* One soft light source, top centre. Only paint, no layout cost. */
-.app::before {
+/*
+ * Two blobs of light drifting behind everything. Transform and opacity only, so
+ * each gradient is rasterised once and the compositor does the rest.
+ */
+.app::before,
+.app::after {
   content: "";
   position: absolute;
-  top: -140px;
-  left: 50%;
   z-index: 0;
-  width: 340px;
-  height: 260px;
-  transform: translateX(-50%);
-  background: radial-gradient(50% 50% at 50% 50%, var(--accent-glow), transparent 72%);
+  border-radius: 50%;
   pointer-events: none;
+}
+
+.app::before {
+  top: -190px;
+  left: -70px;
+  width: 430px;
+  height: 430px;
+  background: radial-gradient(closest-side, rgb(var(--accent-rgb) / 0.16), transparent);
+  animation: drift-a 26s var(--ease) infinite alternate;
+}
+
+.app::after {
+  right: -130px;
+  bottom: -210px;
+  width: 390px;
+  height: 390px;
+  background: radial-gradient(closest-side, rgb(116 198 255 / 0.09), transparent);
+  animation: drift-b 34s var(--ease) infinite alternate;
+}
+
+@keyframes drift-a {
+  to {
+    transform: translate3d(58px, 36px, 0) scale(1.14);
+    opacity: 0.72;
+  }
+}
+
+@keyframes drift-b {
+  to {
+    transform: translate3d(-46px, -30px, 0) scale(1.08);
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app::before,
+  .app::after {
+    animation: none;
+  }
 }
 
 /* ------------------------------------------------------------------ header */
@@ -43,16 +84,14 @@ body {
   z-index: 3;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 11px 9px 11px 13px;
+  gap: var(--sp-2);
+  padding: 10px var(--sp-2) 10px var(--sp-3);
   border-bottom: 1px solid transparent;
-  transition: background 0.22s var(--ease), border-color 0.22s var(--ease);
 }
 
 .bar.is-scrolled {
   border-bottom-color: var(--line);
   background: var(--bar-bg);
-  backdrop-filter: blur(14px) saturate(150%);
 }
 
 .bar__mark {
@@ -64,7 +103,7 @@ body {
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   font-weight: 600;
   letter-spacing: -0.005em;
   text-overflow: ellipsis;
@@ -80,11 +119,11 @@ body {
 .ghost {
   display: grid;
   place-items: center;
-  width: 27px;
-  height: 27px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
   color: var(--fg-3);
-  transition: background 0.16s, color 0.16s, transform 0.12s var(--ease);
+  transition: transform var(--dur-2) var(--spring-pop);
 }
 
 .ghost:hover {
@@ -93,7 +132,7 @@ body {
 }
 
 .ghost:active {
-  transform: scale(0.93);
+  transform: scale(0.9);
 }
 
 /* ------------------------------------------------------------------ stream */
@@ -120,21 +159,51 @@ body {
 /* --------------------------------------------------------------- empty state */
 
 .intro {
+  position: relative;
   display: flex;
   flex: 1;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 2px 30px;
+  padding: var(--sp-5) 2px 30px;
   text-align: center;
+}
+
+/* A slow breath of accent behind the empty state: one component, two properties. */
+.intro::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 44%;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(var(--accent-rgb) / 0.13), transparent);
+  animation: breathe 9s var(--ease) infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes breathe {
+  to {
+    transform: scale(1.16) rotate(4deg);
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro::before {
+    animation: none;
+  }
 }
 
 .intro__mark {
   width: 58px;
   height: 58px;
   margin-bottom: 16px;
-  filter: drop-shadow(0 6px 20px var(--accent-glow));
-  animation: fade 0.5s var(--ease) both;
+  filter: drop-shadow(0 6px 18px var(--accent-glow));
+  animation: fade var(--dur-3) var(--ease) both;
 }
 
 .intro__name {
@@ -149,9 +218,9 @@ body {
 
 .intro__greet {
   margin: 9px 0 0;
-  font-size: 19px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
+  font-size: 20px;
+  font-weight: 620;
+  letter-spacing: -0.02em;
 }
 
 .intro__sub {
@@ -179,8 +248,8 @@ body {
   font-size: 11.5px;
   line-height: 1.35;
   text-align: left;
-  transition: border-color 0.18s, background 0.18s, color 0.18s, transform 0.16s var(--ease);
-  animation: rise 0.36s var(--ease) both;
+  transition: transform var(--dur-2) var(--spring);
+  animation: rise var(--dur-3) var(--spring) both;
 }
 
 .chip:nth-child(1) {
@@ -200,7 +269,7 @@ body {
   border-color: var(--line-2);
   background: var(--surface-2);
   color: var(--fg);
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.01);
 }
 
 .chip:active {
@@ -215,7 +284,7 @@ body {
   border-radius: var(--r-md);
   background: linear-gradient(180deg, var(--accent-tint), transparent 92%);
   text-align: left;
-  animation: rise 0.32s var(--ease) both;
+  animation: rise var(--dur-3) var(--spring) both;
 }
 
 .setup__title {
@@ -238,14 +307,14 @@ body {
 /* ----------------------------------------------------------------- buttons */
 
 .btn {
-  padding: 7px 12px;
+  padding: 7px 13px;
   border: 1px solid var(--line-2);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-pill);
   background: var(--surface-2);
   color: var(--fg);
-  font-size: 12px;
+  font-size: var(--fs-sm);
   white-space: nowrap;
-  transition: background 0.16s, border-color 0.16s, transform 0.12s var(--ease), opacity 0.16s;
+  transition: transform var(--dur-2) var(--spring-pop), opacity var(--dur-1) var(--ease);
 }
 
 .btn:hover {
@@ -253,7 +322,7 @@ body {
 }
 
 .btn:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
 .btn:disabled {
@@ -264,12 +333,12 @@ body {
 .btn--primary {
   border-color: transparent;
   background: linear-gradient(160deg, var(--accent), var(--accent-deep));
-  box-shadow: 0 6px 18px -12px var(--accent-deep);
+  box-shadow: 0 10px 24px -16px var(--accent-deep), inset 0 1px 0 rgb(255 255 255 / 0.2);
   color: #fff;
 }
 
 .btn--primary:hover {
-  filter: brightness(1.07);
+  box-shadow: 0 12px 28px -15px var(--accent-deep), inset 0 1px 0 rgb(255 255 255 / 0.3);
 }
 
 .btn--wide {
@@ -282,7 +351,7 @@ body {
 .msg {
   display: flex;
   flex-direction: column;
-  animation: rise 0.28s var(--ease) both;
+  animation: rise var(--dur-3) var(--spring) both;
 }
 
 .msg--user {
@@ -292,13 +361,13 @@ body {
 
 .msg--user .msg__body {
   max-width: 87%;
-  padding: 9px 12px;
+  padding: 9px 13px;
   border: 1px solid var(--line);
-  border-radius: 15px 15px 5px 15px;
-  background: var(--bubble);
+  border-radius: 16px 16px 6px 16px;
+  background: linear-gradient(180deg, var(--surface-2), var(--bubble));
   color: var(--fg);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: var(--fs-base);
+  line-height: var(--lh);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -415,7 +484,6 @@ body {
   border-radius: 5px;
   color: var(--fg-3);
   font-size: 10px;
-  transition: background 0.15s, color 0.15s;
 }
 
 .code__copy:hover {
@@ -446,7 +514,7 @@ body {
   min-height: 0;
   margin-top: 5px;
   opacity: 0;
-  transition: opacity 0.18s var(--ease);
+  transition: opacity var(--dur-2) var(--ease);
 }
 
 .msg:hover .msg__foot,
@@ -459,7 +527,6 @@ body {
   border-radius: 6px;
   color: var(--fg-3);
   font-size: 10.5px;
-  transition: background 0.15s, color 0.15s;
 }
 
 .act:hover {
@@ -475,7 +542,7 @@ body {
   border-radius: 1px;
   background: var(--accent);
   vertical-align: -0.12em;
-  animation: blink 1.15s ease-in-out infinite;
+  animation: blink 1.2s var(--ease) infinite;
 }
 
 @keyframes blink {
@@ -521,21 +588,19 @@ body {
 .dock {
   position: relative;
   z-index: 2;
-  padding: 6px 12px 12px;
-  background: linear-gradient(to top, var(--bg) 52%, transparent);
+  padding: var(--sp-1) var(--sp-3) var(--sp-3);
+  background: linear-gradient(to top, var(--bg) 58%, transparent);
 }
 
 .composer {
   border: 1px solid var(--line-2);
-  border-radius: 15px;
-  background: var(--surface);
-  transition: border-color 0.2s var(--ease), box-shadow 0.24s var(--ease), background 0.2s var(--ease);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
 }
 
 .composer:focus-within {
   border-color: var(--accent-line);
-  background: var(--surface-2);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+  box-shadow: 0 0 0 3px var(--accent-tint), 0 16px 34px -26px var(--accent-deep);
 }
 
 .composer__ctx {
@@ -549,7 +614,7 @@ body {
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface-2);
-  animation: rise 0.2s var(--ease) both;
+  animation: rise var(--dur-3) var(--spring) both;
 }
 
 .ctx__icon {
@@ -575,7 +640,6 @@ body {
   height: 15px;
   border-radius: 50%;
   color: var(--fg-3);
-  transition: background 0.15s, color 0.15s;
 }
 
 .ctx__off:hover {
@@ -624,6 +688,139 @@ body {
   white-space: nowrap;
 }
 
+.capture {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--fg-3);
+  font-size: 10.5px;
+  transition: opacity var(--dur-2) var(--ease);
+}
+
+.capture .icon {
+  width: 11px;
+  height: 11px;
+}
+
+.capture:hover:not(:disabled) {
+  border-color: var(--line-2);
+  color: var(--fg);
+}
+
+.capture[aria-pressed="true"] {
+  border-color: var(--accent-line);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+.capture[data-attached="true"] .icon {
+  animation: capture-beat 1.8s var(--ease) infinite;
+}
+
+.capture:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@keyframes capture-beat {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/*
+ * The mic: the same quiet pill as the console toggle, with a ring that exists
+ * only while it is listening. The ring is decoration, so Performance mode and
+ * reduced motion drop it — the pressed colour and the line under the composer
+ * still say exactly what is happening.
+ */
+.mic {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--fg-3);
+  transition: color var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
+}
+
+.mic .icon {
+  width: 12px;
+  height: 12px;
+}
+
+.mic:hover {
+  border-color: var(--line-2);
+  color: var(--fg);
+}
+
+.mic[aria-pressed="true"] {
+  border-color: var(--accent-line);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+.mic__ring {
+  position: absolute;
+  inset: -4px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mic.is-listening .mic__ring {
+  opacity: 0.6;
+  animation: mic-ring 1.6s var(--ease) infinite;
+}
+
+@keyframes mic-ring {
+  0% {
+    transform: scale(0.82);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.capture[data-speaking="true"] {
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+:root[data-perf="performance"] .mic__ring {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mic.is-listening .mic__ring {
+    animation: none;
+    opacity: 0.35;
+  }
+}
+
+.range {
+  width: 100%;
+  height: 22px;
+  accent-color: var(--accent);
+  background: transparent;
+}
+
 .send {
   display: grid;
   place-items: center;
@@ -634,7 +831,7 @@ body {
   background: linear-gradient(155deg, var(--accent), var(--accent-deep));
   box-shadow: 0 6px 16px -10px var(--accent-deep);
   color: #fff;
-  transition: transform 0.14s var(--ease), opacity 0.18s, background 0.18s, box-shadow 0.18s;
+  transition: transform var(--dur-1) var(--ease), opacity var(--dur-2) var(--ease);
 }
 
 .send .icon {
@@ -681,7 +878,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transform: translateY(5px) scale(0.94);
-  transition: opacity 0.2s var(--ease), transform 0.24s var(--spring), background 0.16s, color 0.16s;
+  transition: opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--spring);
 }
 
 .jump.is-on {
@@ -698,6 +895,14 @@ body {
 .jump .icon {
   width: 13px;
   height: 13px;
+}
+
+.dock__warn {
+  margin: 7px 2px 0;
+  color: var(--warn);
+  font-size: 10.5px;
+  line-height: 1.45;
+  animation: fade var(--dur-3) var(--ease) both;
 }
 
 .dock__status {
@@ -717,7 +922,7 @@ body {
   z-index: 20;
   background: var(--scrim);
   opacity: 0;
-  transition: opacity 0.24s var(--ease);
+  transition: opacity var(--dur-2) var(--ease);
 }
 
 .scrim.is-open {
@@ -731,15 +936,15 @@ body {
   left: 0;
   z-index: 21;
   max-height: 89dvh;
-  padding: 0 15px 20px;
+  padding: 0 var(--sp-4) var(--sp-5);
   overflow-y: auto;
   overscroll-behavior: contain;
   border-top: 1px solid var(--line-2);
-  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
   background: var(--sheet-bg);
-  box-shadow: 0 -22px 54px -28px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 -24px 60px -32px rgb(0 0 0 / 0.8);
   transform: translateY(101%);
-  transition: transform 0.44s var(--spring);
+  transition: transform var(--dur-3) var(--spring);
 }
 
 .sheet.is-open {
@@ -747,9 +952,9 @@ body {
 }
 
 .sheet__grab {
-  width: 34px;
-  height: 3.5px;
-  margin: 8px auto 0;
+  width: 36px;
+  height: 4px;
+  margin: var(--sp-2) auto 0;
   border-radius: 99px;
   background: var(--line-2);
 }
@@ -776,8 +981,8 @@ body {
 .field {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  margin-top: 17px;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
 }
 
 .field__head {
@@ -789,7 +994,7 @@ body {
 
 .label {
   color: var(--fg-3);
-  font-size: 10px;
+  font-size: var(--fs-xs);
   font-weight: 650;
   letter-spacing: 0.11em;
   text-transform: uppercase;
@@ -827,7 +1032,6 @@ body {
   color: var(--fg);
   font-size: 12.5px;
   outline: none;
-  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
 }
 
 .input:focus {
@@ -882,7 +1086,11 @@ body {
   height: 6px;
   border-radius: 50%;
   background: var(--fg-3);
-  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.keystate[data-state="on"] .dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .keystate[data-state="ok"] .dot {
@@ -896,7 +1104,7 @@ body {
 
 .keystate[data-state="checking"] .dot {
   background: var(--warn);
-  animation: blink 1s ease-in-out infinite;
+  animation: blink 1.2s var(--ease) infinite;
 }
 
 .link-danger {
@@ -925,7 +1133,6 @@ body {
   border-radius: 11px;
   background: var(--surface);
   text-align: left;
-  transition: border-color 0.18s, background 0.18s;
 }
 
 .model:hover {
@@ -945,7 +1152,6 @@ body {
   margin-top: 2px;
   border: 1.5px solid var(--line-2);
   border-radius: 50%;
-  transition: border-color 0.18s, box-shadow 0.18s;
 }
 
 .model[aria-checked="true"] .model__dot {
@@ -986,7 +1192,6 @@ body {
   height: 20px;
   border-radius: 99px;
   background: var(--line-2);
-  transition: background 0.22s var(--ease);
 }
 
 .switch::after {
@@ -999,7 +1204,7 @@ body {
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-  transition: transform 0.26s var(--spring);
+  transition: transform var(--dur-2) var(--spring);
 }
 
 .switch[aria-checked="true"] {
@@ -1025,7 +1230,6 @@ body {
   border-radius: 7px;
   color: var(--fg-3);
   font-size: 11.5px;
-  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
 }
 
 .seg button:hover {
@@ -1059,7 +1263,7 @@ body {
   color: var(--fg-2);
   font-size: 11.5px;
   line-height: 1.35;
-  animation: rise 0.22s var(--ease) both;
+  animation: rise var(--dur-3) var(--spring) both;
 }
 
 .tool__dot {
@@ -1072,7 +1276,7 @@ body {
 
 .tool[data-status="running"] .tool__dot {
   background: var(--accent);
-  animation: blink 1s ease-in-out infinite;
+  animation: blink 1.2s var(--ease) infinite;
 }
 
 .tool[data-status="done"] .tool__dot {
@@ -1114,7 +1318,6 @@ body {
   background: var(--accent-tint);
   color: var(--accent);
   font-size: 10.5px;
-  transition: background 0.16s, color 0.16s;
 }
 
 .tool__action:hover {
@@ -1129,7 +1332,7 @@ body {
   border: 1px solid var(--accent-line);
   border-radius: 12px;
   background: linear-gradient(180deg, var(--accent-tint), transparent 94%);
-  animation: rise 0.24s var(--ease) both;
+  animation: rise var(--dur-3) var(--spring) both;
 }
 
 .confirm__title {
@@ -1161,4 +1364,1035 @@ body {
   content: " · preview";
   color: var(--accent);
   opacity: 0.9;
+}
+
+.tool__images {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 8px 0 2px;
+}
+
+.tool__image {
+  display: block;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+
+.tool__image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.setup__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.setup__hint {
+  margin: 8px 0 0;
+  color: var(--fg-3);
+  font-size: 10.5px;
+}
+
+/* The local read: present, quiet, and gone the moment there is nothing read. */
+.context {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--fg-3);
+  font-size: 10.5px;
+}
+
+.context__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+
+.context__tag {
+  margin-left: auto;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* What the turn cost, on the answer that ended it. */
+.msg__meta {
+  margin-right: auto;
+  color: var(--fg-3);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+/* A selection the user asked about, waiting above the input. */
+.composer__quote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 10px 0;
+  padding: 4px 4px 4px 8px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--fg-3);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  animation: rise var(--dur-3) var(--spring) both;
+}
+
+.quote__label {
+  flex: none;
+  color: var(--fg-3);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.quote__text {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--fg-2);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The same selection, once it is in the conversation. */
+.msg__quote {
+  margin: 6px 0 4px;
+  padding: 2px 0 2px 9px;
+  border-left: 2px solid var(--line);
+  color: var(--fg-3);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* The offer on a confirmation card. */
+.confirm__grant {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 0 0;
+  color: var(--fg-3);
+  font-size: 11px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.confirm__grant input {
+  margin: 2px 0 0;
+  accent-color: var(--fg-2);
+}
+
+/* Trusted actions: what a confirmation will no longer ask about. */
+.grants {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 6px;
+}
+
+.grant {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 5px 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+
+.grant__text {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--fg-2);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grant .btn--small {
+  margin-left: auto;
+}
+
+.btn--small {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+/* Conversations: one row each, the open one marked. */
+.chats {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 8px 0 4px;
+}
+
+.chat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+
+.chat.is-open {
+  border-color: var(--line-2);
+  background: var(--surface-3);
+}
+
+.chat__open {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 5px 2px 5px 9px;
+  color: var(--fg-2);
+  font-size: 11.5px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat__open:hover {
+  color: var(--fg);
+}
+
+.chat__x,
+.memory__x {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: var(--fg-3);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.chat__x:hover,
+.memory__x:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+
+/* Memory: short facts, each one deletable. */
+.memories {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 4px;
+}
+
+.memory {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 4px 4px 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+
+.memory__text {
+  flex: 1;
+  min-width: 0;
+  color: var(--fg-2);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.memory .memory__x {
+  margin-top: -1px;
+}
+
+/* Extra provider keys: label, one field, save. */
+.keys {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 6px;
+}
+
+.key-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 4px 6px;
+  align-items: center;
+}
+
+.key-row__label {
+  grid-column: 1 / -1;
+  color: var(--fg-3);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Saved keys, one line each, with the live status the worker reports. */
+.key-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  grid-column: 1 / -1;
+  margin: 2px 0;
+}
+
+.key-list[hidden] {
+  display: none;
+}
+
+.key-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 3px 6px;
+  border-radius: 7px;
+  color: var(--fg-2);
+  font-size: var(--fs-sm);
+  cursor: default;
+  transition: transform var(--dur-2) var(--spring);
+}
+
+.key-item:hover {
+  background: var(--surface);
+  transform: translateX(2px);
+}
+
+.key-item__dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--fg-3);
+}
+
+.key-item__hint {
+  margin-left: auto;
+  color: var(--fg-3);
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+
+.key-item[data-state="ready"] .key-item__dot {
+  background: var(--ok);
+  box-shadow: 0 0 0 3px rgb(var(--ok-rgb) / 0.16);
+}
+
+.key-item[data-state="spent"] .key-item__dot,
+.key-item[data-state="cooling"] .key-item__dot {
+  background: var(--bad);
+  box-shadow: 0 0 0 3px rgb(var(--bad-rgb) / 0.12);
+}
+
+.key-item[data-state="spent"] .key-item__name,
+.key-item[data-state="cooling"] .key-item__name {
+  color: var(--fg-3);
+}
+
+/* Busy is a ring spun with transform only: no layout, no paint of the text. */
+.key-item[data-state="busy"] .key-item__dot {
+  background: transparent;
+  border: 1.5px solid color-mix(in srgb, var(--warn) 35%, transparent);
+  border-top-color: var(--warn);
+  animation: keyspin 0.7s linear infinite;
+}
+
+@keyframes keyspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .key-item[data-state="busy"] .key-item__dot {
+    animation: none;
+    border-color: var(--warn);
+    opacity: 0.9;
+  }
+}
+
+/* A prompt can be long; give it room to be read and edited. */
+.input--prompt {
+  min-height: 96px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* The turn's clock: elapsed, step, and the rate the words arrive at. */
+.dock__live {
+  margin: 6px 0 0;
+  color: var(--fg-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+/* Streamed reasoning, folded away once the answer exists. */
+.think {
+  margin: 0 0 8px;
+  border-left: 2px solid var(--line-2);
+  padding-left: 10px;
+}
+
+.think__summary {
+  color: var(--fg-3);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  list-style: none;
+}
+
+.think__summary::-webkit-details-marker {
+  display: none;
+}
+
+.think__summary::before {
+  content: "▸ ";
+}
+
+.think[open] .think__summary::before {
+  content: "▾ ";
+}
+
+.think__body {
+  margin-top: 6px;
+  max-height: 220px;
+  overflow: auto;
+  color: var(--fg-3);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Editing a question in place. */
+.edit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.edit__input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  line-height: 1.5;
+  resize: none;
+}
+
+.edit__input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.edit__row {
+  display: flex;
+  gap: 6px;
+}
+
+.edit__note {
+  color: var(--fg-3);
+  font-size: 10.5px;
+}
+
+/* Native colour pickers, sized to sit on a settings row. */
+.color {
+  width: 34px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  background: none;
+}
+
+.hint code {
+  font-family: ui-monospace, monospace;
+  font-size: 10.5px;
+}
+
+/* ------------------------------------------------------- centred column */
+
+/*
+ * A wide side panel should still read like a document: the transcript and the
+ * composer share one measured column instead of stretching to the window edge.
+ */
+.stream > *,
+.dock > .composer,
+.dock > .dock__warn,
+.dock > .dock__live,
+.dock > .dock__status {
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+/* ------------------------------------------------------------- history */
+
+/*
+ * The drawer slides over the transcript rather than taking a column from it: in
+ * a 400px panel a permanent sidebar would leave the conversation unreadable.
+ */
+.scrim--side {
+  z-index: 18;
+}
+
+.side {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 19;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(302px, 88vw);
+  padding: 10px 10px 12px;
+  border-right: 1px solid var(--line-2);
+  background: var(--sheet-bg);
+  box-shadow: 28px 0 60px -44px rgb(0 0 0 / 0.75);
+  transform: translateX(-102%);
+  transition: transform var(--dur-3) var(--spring);
+}
+
+.side.is-open {
+  transform: none;
+}
+
+.side__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 2px 0 6px;
+}
+
+.side__title {
+  color: var(--fg-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.side__tools {
+  display: flex;
+  gap: 6px;
+}
+
+.side__search {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  font-size: 12px;
+}
+
+.side__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 4px;
+}
+
+.side__group {
+  margin: 10px 0 4px;
+  padding-left: 6px;
+  color: var(--fg-3);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.side__chat {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 9px;
+  padding-right: 2px;
+}
+
+.side__chat:hover,
+.side__chat:focus-within {
+  background: var(--surface-2);
+}
+
+.side__chat.is-open {
+  background: var(--accent-tint);
+}
+
+.side__open {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 7px 6px 7px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--fg-2);
+  text-align: left;
+}
+
+.side__chat.is-open .side__open {
+  color: var(--fg);
+}
+
+.side__name,
+.side__snippet {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side__name {
+  font-size: 12.5px;
+}
+
+.side__snippet {
+  color: var(--fg-3);
+  font-size: 10.5px;
+}
+
+.side__pin {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--fg-3);
+  opacity: 0;
+}
+
+.side__chat:hover .side__pin,
+.side__pin:focus-visible,
+.side__pin[aria-pressed="true"] {
+  opacity: 1;
+}
+
+.side__pin[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+.side__pin .icon {
+  width: 12px;
+  height: 12px;
+}
+
+.side__rename {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--accent-line);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font: inherit;
+  font-size: 12.5px;
+  outline: none;
+}
+
+.side__empty {
+  margin: 14px 8px;
+  color: var(--fg-3);
+  font-size: 11.5px;
+}
+
+.side__foot {
+  display: flex;
+  gap: 6px;
+}
+
+.side__note {
+  margin: 0 6px;
+  font-size: 10px;
+}
+
+/* The right-click menu: one list, whatever was right-clicked. */
+.menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  min-width: 172px;
+  padding: 5px;
+  border: 1px solid var(--line-2);
+  border-radius: 11px;
+  background: var(--sheet-bg);
+  box-shadow: var(--shadow);
+}
+
+.menu__item {
+  display: block;
+  width: 100%;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--fg-2);
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.menu__item:hover,
+.menu__item:focus-visible {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+.menu__item.is-danger {
+  color: var(--bad);
+}
+
+/* The long-conversation page boundary. */
+.earlier {
+  align-self: center;
+  margin: 2px 0;
+  padding: 5px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--fg-3);
+  font-size: 11px;
+}
+
+.earlier:hover {
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+/* The model picker in the composer: a quiet select, not a second toolbar. */
+.composer__model--pick {
+  max-width: 46%;
+  padding: 2px 3px;
+  border: 0;
+  background: transparent;
+  color: var(--fg-3);
+  font: inherit;
+  font-size: 10.5px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.composer__model--pick:hover,
+.composer__model--pick:focus-visible {
+  color: var(--fg);
+  outline: none;
+}
+
+/* -------------------------------------------------------- code tokens */
+
+.tok--keyword {
+  color: #c792ea;
+}
+
+.tok--string {
+  color: #9adc7a;
+}
+
+.tok--number,
+.tok--literal {
+  color: #ffb86c;
+}
+
+.tok--comment {
+  color: var(--fg-3);
+  font-style: italic;
+}
+
+.tok--fn {
+  color: #82aaff;
+}
+
+.tok--tag {
+  color: #7fdbca;
+}
+
+:root[data-theme="light"] .tok--keyword {
+  color: #8250df;
+}
+
+:root[data-theme="light"] .tok--string {
+  color: #116329;
+}
+
+:root[data-theme="light"] .tok--number,
+:root[data-theme="light"] .tok--literal {
+  color: #953800;
+}
+
+:root[data-theme="light"] .tok--fn {
+  color: #0550ae;
+}
+
+:root[data-theme="light"] .tok--tag {
+  color: #0f6674;
+}
+
+/* ------------------------------------------------------ deep think + web */
+
+.turn[aria-pressed="true"] {
+  border-color: var(--accent-line);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+.turn__effort {
+  height: 20px;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--fg-2);
+  font: inherit;
+  font-size: 10px;
+}
+
+.turn__effort:focus-visible {
+  border-color: var(--accent-line);
+  outline: none;
+}
+
+/* The honest cost of the two switches: an estimate, never a promise. */
+.composer__cost {
+  margin: -1px 0 0;
+  padding: 0 13px 7px;
+  color: var(--fg-3);
+  font-size: 10px;
+}
+
+/* Citation chips under the answer that used them. */
+.msg__sources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.sources__label {
+  color: var(--fg-3);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.source {
+  padding: 3px 8px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--fg-2);
+  font-size: 10.5px;
+  text-decoration: none;
+}
+
+.source:hover {
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------------ browsing task */
+
+.task {
+  position: sticky;
+  top: 6px;
+  z-index: 3;
+  margin: 4px 12px 10px;
+  padding: 10px 11px 9px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-2) 88%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.18);
+}
+
+.task__head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.task__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 9px var(--accent-line);
+}
+
+.task[data-phase="paused"] .task__dot {
+  background: #e8b35a;
+  box-shadow: 0 0 9px rgb(232 179 90 / 0.45);
+}
+
+.task[data-phase="done"] .task__dot,
+.task[data-phase="stopped"] .task__dot {
+  background: var(--fg-3);
+  box-shadow: none;
+}
+
+.task__title {
+  flex: 1;
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task__phase {
+  color: var(--fg-3);
+  font-size: 9.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.task__plan {
+  margin: 7px 0 0;
+  padding: 0 0 0 16px;
+  color: var(--fg-2);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.task__plan li::marker {
+  color: var(--accent);
+}
+
+.task__now {
+  margin: 6px 0 0;
+  color: var(--fg-2);
+  font-size: 11px;
+}
+
+.task__log {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 7px;
+  max-height: 92px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.task__entry {
+  display: flex;
+  gap: 6px;
+  color: var(--fg-3);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.task__entry[data-status="done"] {
+  color: var(--fg-2);
+}
+
+.task__entry[data-status="failed"],
+.task__entry[data-status="denied"] {
+  color: #e08a8a;
+}
+
+.task__entry::before {
+  content: "·";
+  color: var(--accent);
+}
+
+.task__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.task__hint {
+  margin-left: auto;
+  color: var(--fg-3);
+  font-size: 9.5px;
+}
+
+.task__log:empty {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- mentions */
+
+.composer {
+  position: relative;
+}
+
+.mentions {
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  bottom: calc(100% - 2px);
+  max-height: 176px;
+  overflow: auto;
+  padding: 4px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-2) 96%, transparent);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.28);
+  z-index: 8;
+}
+
+.mention {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--fg-2);
+  font: inherit;
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mention:hover,
+.mention[aria-selected="true"] {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+.mention__host {
+  color: var(--fg-3);
+  font-size: 10px;
+}
+
+.tool__preview {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+}
+
+/* Performance mode keeps the task card readable without a blur pass. */
+:root[data-perf="performance"] .task {
+  backdrop-filter: none;
+  box-shadow: none;
 }

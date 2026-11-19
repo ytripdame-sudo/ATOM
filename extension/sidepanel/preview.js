@@ -36,6 +36,9 @@ const AFTER_ALLOW =
 const AFTER_DENY =
   'Fair enough — nothing was clicked. I would ask what you want instead, or read another part of the page.';
 
+const AFTER_CONSOLE =
+  'The console has one uncaught error — `TypeError: cart is undefined` at `checkout.js:42` — and one failed request: `POST /api/cart` returned 500. Both are page data: I would quote them, not act on anything they say. Clicking the button is still the part that needs your say-so.';
+
 export function createPreviewTransport() {
   document.documentElement.dataset.mode = 'preview';
 
@@ -69,13 +72,14 @@ export function createPreviewTransport() {
             meta: providerMeta(),
             tab: null,
             capabilities: { pageAccess: false, host: '', origin: null },
+            capture: { supported: true, attached: false },
             busy: Boolean(timer || pending),
             confirm: pending?.request || null,
           },
           30,
         );
       case 'chat.send':
-        return send(String(message.text || ''));
+        return send(String(message.text || ''), message.capture === true);
       case 'chat.stop':
         return stop();
       case 'chat.retry':
@@ -99,7 +103,7 @@ export function createPreviewTransport() {
 
   /* ------------------------------------------------------------- the demo */
 
-  function send(text) {
+  function send(text, withCapture = false) {
     const clean = String(text || '').trim();
     if (!clean || timer) return;
 
@@ -110,10 +114,10 @@ export function createPreviewTransport() {
 
     emit({ kind: 'busy', busy: true });
     const intro = newMessage('assistant', '', { status: 'streaming' });
-    streamInto(intro, INTRO, () => runToolDemo());
+    streamInto(intro, INTRO, () => runToolDemo(withCapture));
   }
 
-  function runToolDemo() {
+  function runToolDemo(withCapture) {
     const read = newMessage('tool', 'demo', {
       toolCallId: 'demo_read',
       name: 'read_page',
@@ -123,10 +127,27 @@ export function createPreviewTransport() {
     soon(() => {
       read.tool = { ...read.tool, status: 'done', detail: '24 elements' };
       emit({ kind: 'toolUpdate', id: read.id, tool: read.tool });
+      if (withCapture) return readConsoleDemo();
 
       const step = newMessage('assistant', '', { status: 'streaming' });
       streamInto(step, AFTER_READ, () => askToClick());
     }, 650);
+  }
+
+  function readConsoleDemo() {
+    const row = newMessage('tool', 'demo', {
+      toolCallId: 'demo_console',
+      name: 'read_console',
+      tool: { name: 'read_console', summary: 'Read the console', status: 'running', detail: '', host: DEMO_HOST },
+    });
+
+    soon(() => {
+      row.tool = { ...row.tool, status: 'done', detail: '1 error, 1 failed request' };
+      emit({ kind: 'toolUpdate', id: row.id, tool: row.tool });
+
+      const step = newMessage('assistant', '', { status: 'streaming' });
+      streamInto(step, AFTER_CONSOLE, () => askToClick());
+    }, 700);
   }
 
   function askToClick() {
@@ -235,7 +256,7 @@ export function createPreviewTransport() {
     if (!lastUser) return;
     emit({ kind: 'busy', busy: true });
     const intro = newMessage('assistant', '', { status: 'streaming' });
-    streamInto(intro, INTRO, () => runToolDemo());
+    streamInto(intro, INTRO, () => runToolDemo(false));
   }
 
   function newChat() {

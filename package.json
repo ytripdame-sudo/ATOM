@@ -1,15 +1,19 @@
 {
   "name": "atom-assistant",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "ATOM — a private assistant in the browser side panel. Extension source lives in extension/.",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
+    "accept": "node scripts/acceptance.mjs",
     "preview": "node scripts/preview.mjs",
     "icons": "node scripts/make-icons.mjs"
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.1"
   }
 }

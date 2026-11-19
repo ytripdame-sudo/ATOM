@@ -4,46 +4,76 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ATOM</title>
+    <script src="../ui/perf.js"></script>
     <link rel="stylesheet" href="../ui/tokens.css" />
     <link rel="stylesheet" href="newtab.css" />
   </head>
-  <body>
-    <div class="orb" aria-hidden="true"></div>
+  <body data-background="aurora" data-font="sans" data-width="default">
+    <!-- Two layers, so a new wallpaper can fade in over the last one. -->
+    <div class="wall" id="wall" aria-hidden="true">
+      <div class="wall__layer" id="wallA"></div>
+      <div class="wall__layer" id="wallB"></div>
+      <div class="wall__tint" id="wallTint"></div>
+    </div>
+    <div class="bg" id="bg" aria-hidden="true"></div>
 
-    <svg class="sprite" aria-hidden="true" width="0" height="0" focusable="false">
-      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6" /></symbol>
-    </svg>
+    <main class="page">
+      <header class="stage">
+        <p class="clock" id="clock"></p>
+        <h1 class="greet" id="greet"></h1>
+        <p class="date" id="date"></p>
+        <nav class="links" id="links" aria-label="Quick links"></nav>
+      </header>
 
-    <main class="stage">
-      <svg class="mark stage__mark" viewBox="0 0 64 64" data-spin aria-hidden="true">
-        <ellipse class="mark__ring mark__ring--a" cx="32" cy="32" rx="25" ry="10" />
-        <g transform="rotate(60 32 32)">
-          <ellipse class="mark__ring mark__ring--b" cx="32" cy="32" rx="25" ry="10" />
-        </g>
-        <circle class="mark__core" cx="32" cy="32" r="4" />
-      </svg>
-
-      <p class="word">ATOM</p>
-      <h1 class="greet" id="greet">Good evening</h1>
-      <p class="sub">Ask anything. It opens in your sidebar.</p>
-
-      <form class="ask" id="ask">
-        <input
-          id="q"
-          type="text"
-          placeholder="Ask ATOM anything…"
-          autocomplete="off"
-          autocapitalize="off"
-          spellcheck="false"
-          aria-label="Ask ATOM anything"
-        />
-        <button class="ask__go" type="submit" aria-label="Ask ATOM">
-          <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
-        </button>
-      </form>
-
-      <p class="foot" id="foot"><kbd>Alt</kbd><kbd>Shift</kbd><kbd>A</kbd> opens the sidebar</p>
+      <section class="chat" aria-label="ATOM">
+        <iframe class="chat__panel" src="../sidepanel/index.html" title="ATOM"></iframe>
+      </section>
     </main>
+
+    <button class="wall-open" id="wallBtn" type="button" aria-expanded="false" aria-controls="wallSheet">
+      Wallpaper
+    </button>
+
+    <section class="wallsheet" id="wallSheet" hidden aria-label="Wallpaper">
+      <header class="wallsheet__head">
+        <h2 class="wallsheet__title">Wallpaper</h2>
+        <button class="wallsheet__done" id="wallClose" type="button">Done</button>
+      </header>
+
+      <div class="wallgrid" id="wallGrid"></div>
+
+      <div class="wallrow">
+        <label class="walladd">
+          Add files
+          <input id="wallFiles" type="file" accept="image/*,video/*,.html,.htm" multiple hidden />
+        </label>
+        <span class="wallhint" id="wallStatus">Images, GIF/WebP, video, or a .html file.</span>
+      </div>
+
+      <div class="wallctl">
+        <label class="wallctl__row">Opacity <input id="wallOpacity" type="range" min="20" max="100" step="1" /></label>
+        <label class="wallctl__row">Dim <input id="wallDim" type="range" min="0" max="95" step="1" /></label>
+        <label class="wallctl__row">Blur <input id="wallBlur" type="range" min="0" max="24" step="1" /></label>
+        <label class="wallctl__row">Speed <input id="wallSpeed" type="range" min="25" max="200" step="5" /></label>
+        <label class="wallctl__row">
+          Frame cap
+          <select id="wallFps">
+            <option value="15">15 fps</option>
+            <option value="24">24 fps</option>
+            <option value="30">30 fps</option>
+            <option value="60">60 fps</option>
+          </select>
+        </label>
+        <label class="wallctl__row">Volume <input id="wallVolume" type="range" min="0" max="100" step="1" /></label>
+        <label class="wallctl__check"><input id="wallMute" type="checkbox" /> Mute video</label>
+        <label class="wallctl__check"><input id="wallLowPower" type="checkbox" /> Low power (static frame)</label>
+      </div>
+
+      <p class="wallhint wallhint--foot">
+        Custom HTML runs in its own sandboxed origin: its scripts and animations run, and it cannot reach the extension
+        or this page.
+      </p>
+    </section>
 
     <script type="module" src="newtab.js"></script>
   </body>

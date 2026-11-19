@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Wallpaper</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+      }
+
+      body > * {
+        max-width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      /*
+       * A manifest sandbox page: its own origin, no extension APIs, and its own
+       * CSP — the one place a wallpaper's own scripts may run. The start page
+       * posts the document here, then keeps the media settings current; nothing
+       * else crosses the boundary.
+       */
+      let params = { muted: true, volume: 0, speed: 1 };
+      let paused = false;
+      let pauseRule = null;
+
+      const apply = () => {
+        for (const media of document.querySelectorAll('video, audio')) {
+          media.muted = params.muted;
+          media.volume = params.volume;
+          media.playbackRate = params.speed;
+        }
+      };
+
+      // Freezing CSS is the only way to stop a document we cannot read from
+      // moving when the tab is hidden or low power is on.
+      const setPaused = (value) => {
+        if (paused === value) return;
+        paused = value;
+
+        if (!pauseRule) {
+          pauseRule = document.createElement('style');
+          (document.head || document.documentElement).append(pauseRule);
+        }
+        pauseRule.textContent = value
+          ? '*, *::before, *::after { animation-play-state: paused !important; }'
+          : '';
+
+        for (const media of document.querySelectorAll('video, audio')) {
+          if (value) media.pause();
+          else media.play().catch(() => {});
+        }
+      };
+
+      setInterval(apply, 1500);
+      apply();
+
+      addEventListener('message', (event) => {
+        const data = event.data || {};
+
+        if (data.type === 'atom-wall-html' && typeof data.html === 'string') {
+          document.open();
+          document.write(data.html);
+          document.close();
+          // The written document replaced our nodes; re-add the freeze rule lazily.
+          pauseRule = null;
+          paused = false;
+          apply();
+          return;
+        }
+
+        if (data.type === 'atom-wall-params' && data.params) {
+          params = { ...params, ...data.params };
+          apply();
+          return;
+        }
+
+        if (data.type === 'atom-wall-pause') {
+          setPaused(Boolean(data.paused));
+        }
+      });
+
+      parent.postMessage({ type: 'atom-wall-ready' }, '*');
+    </script>
+  </body>
+</html>

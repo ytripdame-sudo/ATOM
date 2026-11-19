@@ -50,6 +50,7 @@ test('text deltas stream in order', async () => {
   assert.equal(result.toolCalls.length, 0);
   assert.equal(body.stream, true);
   assert.equal(body.tools, undefined);
+  assert.equal(body.max_completion_tokens, 900);
 });
 
 test('fragmented tool calls are assembled', async () => {
@@ -123,11 +124,26 @@ test('http errors are mapped', async () => {
 });
 
 test('rate limits are mapped', async () => {
+  stubFetch(
+    async () =>
+      new Response(JSON.stringify({ error: { message: 'slow down' } }), {
+        status: 429,
+        headers: { 'retry-after': '7' },
+      }),
+  );
+
+  await assert.rejects(
+    () => groq.streamChat({ apiKey: 'k', model: 'm', messages: [], onDelta: () => {} }),
+    (error) => error.code === 'rate_limit' && error.status === 429 && error.retryAfterMs === 7000,
+  );
+});
+
+test('a 429 without a retry-after header still carries a usable wait', async () => {
   stubFetch(async () => new Response(JSON.stringify({ error: { message: 'slow down' } }), { status: 429 }));
 
   await assert.rejects(
     () => groq.streamChat({ apiKey: 'k', model: 'm', messages: [], onDelta: () => {} }),
-    (error) => error.code === 'rate_limit',
+    (error) => error.retryAfterMs === 0,
   );
 });
 
@@ -154,4 +170,30 @@ test('a missing key never reaches the network', async () => {
     (error) => error.code === 'auth',
   );
   assert.equal(called, false);
+});
+
+test('streamed reasoning is forwarded beside the answer, never mixed into it', async () => {
+  stubFetch(async () =>
+    sseResponse([
+      'data: {"choices":[{"delta":{"reasoning":"Let me think."}}]}\n\n',
+      'data: {"choices":[{"delta":{"reasoning_content":" Step two."}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":"Answer."}}]}\n\n',
+      'data: {"choices":[{"delta":{},"finish_reason":"stop"}]}\n\n',
+      'data: [DONE]\n\n',
+    ]),
+  );
+
+  const reasoning = [];
+  const deltas = [];
+  const result = await groq.streamChat({
+    apiKey: 'k',
+    model: 'openai/gpt-oss-120b',
+    messages: [{ role: 'user', content: 'hi' }],
+    onDelta: (chunk) => deltas.push(chunk),
+    onReasoning: (chunk) => reasoning.push(chunk),
+  });
+
+  assert.deepEqual(reasoning, ['Let me think.', ' Step two.']);
+  assert.equal(result.text, 'Answer.', 'thinking never becomes the answer');
+  assert.deepEqual(deltas, ['Answer.']);
 });

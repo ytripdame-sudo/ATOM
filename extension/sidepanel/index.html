@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ATOM</title>
+    <script src="../ui/perf.js"></script>
     <link rel="stylesheet" href="../ui/tokens.css" />
     <link rel="stylesheet" href="sidepanel.css" />
   </head>
@@ -28,10 +29,40 @@
         <path d="M2.8 12S6 5.8 12 5.8 21.2 12 21.2 12 18 18.2 12 18.2 2.8 12 2.8 12Z" />
         <circle cx="12" cy="12" r="3.1" />
       </symbol>
+      <symbol id="i-pulse" viewBox="0 0 24 24">
+        <path d="M3 12h3.6l2.6-6.4 4 12.8L16 12h5" />
+      </symbol>
+      <symbol id="i-mic" viewBox="0 0 24 24">
+        <rect x="9" y="3.2" width="6" height="11" rx="3" />
+        <path d="M5.6 11.4a6.4 6.4 0 0 0 12.8 0M12 17.8V21" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="6.4" />
+        <path d="M16 16l4.5 4.5" />
+      </symbol>
+      <symbol id="i-brain" viewBox="0 0 24 24">
+        <path d="M9.4 4.6a3 3 0 0 0-3 3 3 3 0 0 0-1.6 5.3A3 3 0 0 0 6.4 18a3 3 0 0 0 3 2.1V4.6ZM14.6 4.6a3 3 0 0 1 3 3 3 3 0 0 1 1.6 5.3A3 3 0 0 1 17.6 18a3 3 0 0 1-3 2.1V4.6Z" />
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9.5 3.5h5l-.8 5.2 3.3 3.1H7l3.3-3.1Z" /><path d="M12 11.8V20.5" /></symbol>
+      <symbol id="i-speaker" viewBox="0 0 24 24">
+        <path d="M4 9.4h3.2L11.5 6v12L7.2 14.6H4Z" />
+        <path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.6a7.6 7.6 0 0 1 0 10.8" />
+      </symbol>
     </svg>
 
     <div class="app">
       <header class="bar" id="bar">
+        <button
+          class="ghost bar__menu"
+          id="historyToggle"
+          type="button"
+          title="History"
+          aria-label="History"
+          aria-expanded="false"
+        >
+          <svg class="icon" aria-hidden="true"><use href="#i-menu" /></svg>
+        </button>
         <svg class="mark bar__mark" viewBox="0 0 64 64" aria-hidden="true">
           <ellipse class="mark__ring mark__ring--a" cx="32" cy="32" rx="25" ry="10" />
           <g transform="rotate(60 32 32)">
@@ -71,9 +102,47 @@
           </div>
 
           <div class="setup" id="setup" hidden>
-            <p class="setup__title">Add a Groq key to start</p>
-            <p class="setup__text">ATOM talks to Groq's API directly. The key stays in this browser profile.</p>
+            <p class="setup__title">Add an API key to start</p>
+            <p class="setup__text">ATOM talks to Groq, Gemini or OpenRouter directly. Keys stay in this browser profile.</p>
             <button class="btn btn--primary setup__btn" type="button" id="setupBtn">Open settings</button>
+          </div>
+
+          <div class="setup" id="accessAsk" hidden>
+            <p class="setup__title">Let ATOM work on every site</p>
+            <p class="setup__text">
+              Chrome asks per site by default, so the first time ATOM touches a new one you get a permission prompt.
+              Allow every site once and that stops. Confirmations, the submit and password/card floors, and the
+              kill switch all stay.
+            </p>
+            <div class="setup__row">
+              <button class="btn btn--primary setup__btn" type="button" id="accessAllowAll">Allow all sites</button>
+              <button class="btn setup__btn" type="button" id="accessPerSite">Ask me per site</button>
+            </div>
+            <p class="setup__hint">Asked once. Change it any time in Settings → Page access.</p>
+          </div>
+        </section>
+
+        <div class="context" id="context" hidden>
+          <span class="context__dot" aria-hidden="true"></span>
+          <span id="contextText"></span>
+          <span class="context__tag">local</span>
+        </div>
+
+        <section class="task" id="task" hidden aria-live="polite" aria-label="Browsing task">
+          <div class="task__head">
+            <span class="task__dot" aria-hidden="true"></span>
+            <span class="task__title" id="taskTitle">Browsing task</span>
+            <span class="task__phase" id="taskPhase">running</span>
+          </div>
+          <ol class="task__plan" id="taskPlan"></ol>
+          <p class="task__now" id="taskNow" hidden></p>
+          <div class="task__log" id="taskLog"></div>
+          <div class="task__actions">
+            <button class="btn btn--small" id="taskPause" type="button">Pause</button>
+            <button class="btn btn--small" id="taskResume" type="button" hidden>Resume</button>
+            <button class="btn btn--small" id="taskTakeover" type="button">Take over</button>
+            <button class="btn btn--small" id="taskStop" type="button">Stop</button>
+            <span class="task__hint">Esc stops too</span>
           </div>
         </section>
 
@@ -93,18 +162,118 @@
               <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
             </button>
           </div>
-          <textarea id="input" rows="1" placeholder="Ask anything…" spellcheck="false" autocomplete="off" enterkeyhint="send"></textarea>
+          <div class="composer__quote" id="quote" hidden>
+            <span class="quote__label" id="quoteLabel">Quoted</span>
+            <span class="quote__text" id="quoteText"></span>
+            <button class="ctx__off" id="quoteClear" type="button" aria-label="Remove the quoted selection">
+              <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+            </button>
+          </div>
+          <div class="mentions" id="mentions" role="listbox" aria-label="Mention a tab" hidden></div>
+          <textarea id="input" rows="1" placeholder="Ask anything…  @ to mention a tab" spellcheck="false" autocomplete="off" enterkeyhint="send"></textarea>
           <div class="composer__row">
-            <span class="composer__model" id="modelLabel"></span>
+            <button
+              class="capture turn"
+              id="deepThink"
+              type="button"
+              aria-pressed="false"
+              title="Deep think: reason the problem through before answering"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#i-brain" /></svg>
+              <span>Think</span>
+            </button>
+            <select class="turn__effort" id="effort" aria-label="Reasoning effort" hidden>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+            <button
+              class="capture turn"
+              id="webSearch"
+              type="button"
+              aria-pressed="false"
+              title="Search the web for this message"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>
+              <span>Web</span>
+            </button>
+            <button
+              class="mic"
+              id="mic"
+              type="button"
+              aria-pressed="false"
+              aria-label="Talk: hold to speak, or click to listen until you stop"
+              title="Hold to talk — click to listen until you stop"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#i-mic" /></svg>
+              <span class="mic__ring" aria-hidden="true"></span>
+            </button>
+            <button
+              class="capture"
+              id="capture"
+              type="button"
+              aria-pressed="false"
+              aria-label="Capture console and failed requests for this turn"
+              title="Attach the debugger for one turn"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#i-pulse" /></svg>
+              <span>Console</span>
+            </button>
+            <select class="composer__model composer__model--pick" id="modelPick" aria-label="Model and provider"></select>
+            <button
+              class="capture"
+              id="speak"
+              type="button"
+              aria-pressed="false"
+              aria-label="Speak replies aloud"
+              title="Speak replies aloud"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#i-speaker" /></svg>
+            </button>
             <button class="send" id="send" type="submit" aria-label="Send" disabled>
               <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
             </button>
           </div>
+          <p class="composer__cost" id="costHint" hidden></p>
         </form>
 
+        <p class="dock__warn" id="captureNote" hidden></p>
+        <p class="dock__live" id="live" hidden aria-live="polite"></p>
         <p class="dock__status" id="status" hidden></p>
       </footer>
     </div>
+
+    <div class="scrim scrim--side" id="sideScrim" hidden></div>
+
+    <aside class="side" id="side" aria-label="Chat history" aria-hidden="true">
+      <div class="side__head">
+        <span class="side__title">History</span>
+        <button class="ghost" id="sideClose" type="button" aria-label="Close history">
+          <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+        </button>
+      </div>
+      <div class="side__tools">
+        <button class="btn btn--small" id="sideNew" type="button">New chat</button>
+        <input
+          class="input side__search"
+          id="sideSearch"
+          type="search"
+          placeholder="Search conversations…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+      <div class="side__list" id="sideList" role="list"></div>
+      <p class="side__empty" id="sideEmpty" hidden>Nothing here yet.</p>
+      <div class="side__foot">
+        <button class="btn btn--small" id="sideExport" type="button">Export this chat</button>
+        <button class="btn btn--small" id="sideImportBtn" type="button">Import JSON</button>
+        <input id="sideImport" type="file" accept="application/json,.json" hidden />
+      </div>
+      <p class="hint side__note">Right-click a conversation to pin, rename, export or delete it.</p>
+    </aside>
+
+    <div class="menu" id="menu" role="menu" hidden></div>
 
     <div class="scrim" id="scrim" hidden></div>
 
@@ -120,6 +289,7 @@
       <section class="field">
         <div class="field__head">
           <label class="label" for="apiKey">Groq API key</label>
+          <p class="hint">The primary key. Add more below, or switch provider.</p>
           <span class="keystate" id="keyState" data-state="none">
             <span class="dot"></span>
             <span id="keyStateText">Not set</span>
@@ -130,12 +300,130 @@
           <button class="btn" id="saveKey" type="button">Save</button>
         </div>
         <p class="hint">Stored in this browser profile. <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer">Get a key →</a></p>
+        <div class="key-list" id="groqKeys" hidden></div>
         <button class="link-danger" id="removeKey" type="button" hidden>Remove key</button>
+      </section>
+
+      <section class="field">
+        <span class="label">More free providers</span>
+        <p class="hint">
+          Gemini and OpenRouter have free tiers too. Every key gets its own tokens-per-minute, so a second key — from
+          the same provider or another — genuinely adds headroom.
+        </p>
+        <div class="keys" id="keys"></div>
+        <div class="row row--between">
+          <div class="row__text">
+            <p class="hint">Rotate to the next key or provider when one is out of quota.</p>
+          </div>
+          <button
+            class="switch"
+            id="rotate"
+            type="button"
+            role="switch"
+            aria-checked="true"
+            aria-label="Rotate to another key or provider when one runs out"
+          ></button>
+        </div>
+        <label class="label" for="maxTokens">Largest request</label>
+        <select class="input" id="maxTokens">
+          <option value="4000">~4k tokens — smallest free tiers</option>
+          <option value="6000">~6k tokens — recommended</option>
+          <option value="8000">~8k tokens — tight but possible</option>
+          <option value="16000">~16k tokens — paid tiers</option>
+        </select>
+        <p class="hint">Older history is trimmed to fit. A request that is still too big is retried once, smaller.</p>
+
+        <label class="label" for="readLimit">Page read size</label>
+        <select class="input" id="readLimit">
+          <option value="small">Small — 40 controls, 4k characters</option>
+          <option value="normal">Normal — 70 controls, 8k characters</option>
+          <option value="large">Large — 120 controls, 16k characters</option>
+        </select>
+        <p class="hint">A smaller read costs fewer tokens. The model is told what was left out.</p>
+
+        <label class="label" for="customUrl">Custom endpoint</label>
+        <p class="hint">
+          Any OpenAI-compatible server. For a local model: Ollama serves
+          <code>http://localhost:11434/v1</code>, LM Studio serves <code>http://localhost:1234/v1</code>.
+        </p>
+        <input class="input" id="customUrl" placeholder="http://localhost:11434/v1" autocomplete="off" spellcheck="false" />
+        <input class="input" id="customModel" placeholder="model id, e.g. llama3.2" autocomplete="off" spellcheck="false" />
+        <input
+          class="input"
+          id="customKey"
+          type="password"
+          placeholder="API key (leave empty for a local server)"
+          autocomplete="off"
+        />
+        <div class="row">
+          <button class="btn btn--small" id="customSave" type="button">Save endpoint</button>
+          <button class="btn btn--small" id="customClear" type="button">Clear</button>
+        </div>
+        <p class="hint" id="customState">No endpoint saved.</p>
+      </section>
+
+      <section class="field">
+        <label class="label" for="provider">Provider</label>
+        <select class="input" id="provider"></select>
+        <p class="hint">The one that answers first. Rotation can still hand a turn to the others.</p>
       </section>
 
       <section class="field">
         <span class="label">Model</span>
         <div class="models" id="models" role="radiogroup" aria-label="Model"></div>
+      </section>
+
+      <section class="field">
+        <span class="label">Web search</span>
+        <p class="hint">
+          Snippets by default; page text only when the model asks for depth, ranked against the question and
+          capped by the budget below. The search key is separate from every model key.
+        </p>
+
+        <label class="label" for="searchProvider">Provider</label>
+        <select class="input" id="searchProvider">
+          <option value="duckduckgo">DuckDuckGo — no key needed</option>
+          <option value="bing">Bing — no key needed</option>
+          <option value="serper">Google via Serper — API key</option>
+          <option value="github">GitHub repositories — no key needed</option>
+          <option value="wikipedia">Wikipedia — no key needed</option>
+          <option value="brave">Brave Search — free tier</option>
+          <option value="searx">SearXNG — your own instance</option>
+        </select>
+
+        <input
+          class="input"
+          id="searchKey"
+          type="password"
+          placeholder="Search API key"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <input
+          class="input"
+          id="searchEndpoint"
+          placeholder="https://… (SearXNG instance, or a Brave-compatible proxy)"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <div class="row">
+          <button class="btn btn--small" id="searchSave" type="button">Save search</button>
+          <span class="hint" id="searchState">No key saved.</span>
+        </div>
+
+        <div class="row row--between">
+          <div class="row__text">
+            <p class="hint">Search on its own when a question needs fresh facts</p>
+          </div>
+          <button class="switch" id="searchAuto" type="button" role="switch" aria-checked="false" aria-label="Search automatically for fresh facts"></button>
+        </div>
+
+        <label class="label" for="searchBudget">Page text budget</label>
+        <select class="input" id="searchBudget">
+          <option value="600">Small — ~600 tokens of page text</option>
+          <option value="1200">Default — ~1.2k tokens</option>
+          <option value="2400">Large — ~2.4k tokens</option>
+        </select>
       </section>
 
       <section class="field">
@@ -152,6 +440,12 @@
           </div>
           <button class="btn" id="pageAccessBtn" type="button">Grant</button>
         </div>
+        <div class="row row--between">
+          <div class="row__text">
+            <p class="hint" id="allSitesNote">All sites: one prompt, then ATOM can read and act anywhere without asking again.</p>
+          </div>
+          <button class="btn" id="allSitesBtn" type="button">Grant all</button>
+        </div>
       </section>
 
       <section class="field">
@@ -165,9 +459,83 @@
       </section>
 
       <section class="field">
+        <span class="label">Browser agent</span>
+        <p class="hint" id="agentModeNote">Chat and look things up. No browsing runs on its own.</p>
+        <div class="seg" id="agentMode" role="tablist" aria-label="Browser agent mode">
+          <button type="button" data-agent="off" role="tab" aria-selected="true">Off</button>
+          <button type="button" data-agent="ask" role="tab" aria-selected="false">Ask</button>
+          <button type="button" data-agent="playground" role="tab" aria-selected="false">Playground</button>
+        </div>
+        <label class="label" for="agentSteps">Step limit</label>
+        <select class="input" id="agentSteps">
+          <option value="8">Short — 8 steps</option>
+          <option value="16">Default — 16 steps</option>
+          <option value="24">Long — 24 steps</option>
+          <option value="32">Very long — 32 steps</option>
+        </select>
+        <label class="label" for="agentTrusted">Trusted sites</label>
+        <textarea class="input input--area" id="agentTrusted" rows="3" placeholder="github.com&#10;music.youtube.com" spellcheck="false"></textarea>
+        <div class="row">
+          <button class="btn btn--small" id="agentTrustedSave" type="button">Save trusted sites</button>
+          <span class="hint">One host per line. Passwords and form submissions still ask.</span>
+        </div>
+      </section>
+
+      <section class="field">
+        <div class="field__head">
+          <span class="label">Conversations</span>
+          <button class="btn btn--small" id="chatsNew" type="button">New</button>
+        </div>
+        <div class="chats" id="chats"></div>
+        <p class="hint" id="chatsEmpty" hidden>Nothing else yet.</p>
+      </section>
+
+      <section class="field">
+        <span class="label">Memory</span>
+        <p class="hint">
+          Facts kept between conversations. ATOM cannot save one silently — the card shows the text and waits for you.
+        </p>
+        <div class="memories" id="memories"></div>
+        <p class="hint" id="memoryEmpty">Nothing remembered yet.</p>
+        <div class="row">
+          <input
+            class="input"
+            id="memoryInput"
+            type="text"
+            maxlength="300"
+            placeholder="Something to remember…"
+            autocomplete="off"
+          />
+          <button class="btn" id="memoryAdd" type="button">Add</button>
+        </div>
+      </section>
+
+      <section class="field">
+        <span class="label">Trusted actions</span>
+        <p class="hint">
+          A confirmation can offer to stop asking about one action on one site. Submitting, passwords, cards and
+          one-time codes are never remembered, and neither is leaving the site.
+        </p>
+        <div class="grants" id="grants"></div>
+        <p class="hint" id="grantsEmpty">Nothing trusted yet.</p>
+      </section>
+
+      <section class="field">
         <label class="label" for="instructions">Standing instructions</label>
-        <textarea class="input input--area" id="instructions" rows="3" placeholder="How should ATOM talk to you?"></textarea>
-        <p class="hint">Applies to every conversation.</p>
+        <textarea
+          class="input input--area input--prompt"
+          id="instructions"
+          rows="6"
+          placeholder="How should ATOM talk to you? Long prompts are fine — a whole playbook if you like."
+        ></textarea>
+        <div class="row">
+          <button class="btn" id="importPrompt" type="button">Import from a file</button>
+          <input id="promptFile" type="file" accept=".txt,.text,.md,.markdown,.json,.html,.htm,.pdf" hidden />
+        </div>
+        <p class="hint">
+          .txt, .md, .json, .html or .pdf, appended to what is there. Applies to every conversation and outranks
+          the defaults. A PDF is read from its text layer; a scan has none, and that is said rather than guessed.
+        </p>
       </section>
 
       <section class="field">
@@ -181,6 +549,143 @@
       </section>
 
       <section class="field">
+        <span class="label">Start page</span>
+        <p class="hint">The New Tab page: background, colours, font, width and widgets. Changes show there at once.</p>
+
+        <label class="label" for="spBackground">Background</label>
+        <select class="input" id="spBackground">
+          <option value="aurora">Aurora</option>
+          <option value="midnight">Midnight</option>
+          <option value="daylight">Daylight</option>
+          <option value="nebula">Nebula</option>
+          <option value="sand">Sand</option>
+          <option value="solid">Solid colour</option>
+          <option value="image">Picture</option>
+        </select>
+
+        <div class="row row--between">
+          <label class="label" for="spColor">Base colour</label>
+          <input class="color" id="spColor" type="color" />
+        </div>
+        <div class="row row--between">
+          <label class="label" for="spAccent">Accent</label>
+          <input class="color" id="spAccent" type="color" />
+        </div>
+
+        <input class="input" id="spImage" placeholder="https://… picture address" autocomplete="off" spellcheck="false" />
+        <input id="spUpload" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+        <div class="row">
+          <button class="btn btn--small" id="spPickImage" type="button">Upload a picture</button>
+          <span class="hint" id="spImageState"></span>
+        </div>
+        <p class="hint">A picture is stored in this browser; 1.5 MB is the ceiling.</p>
+
+        <label class="label" for="spFont">Font</label>
+        <select class="input" id="spFont">
+          <option value="sans">Sans</option>
+          <option value="serif">Serif</option>
+          <option value="mono">Mono</option>
+          <option value="rounded">Rounded</option>
+        </select>
+
+        <label class="label" for="spWidth">Width</label>
+        <select class="input" id="spWidth">
+          <option value="narrow">Narrow</option>
+          <option value="default">Default</option>
+          <option value="wide">Wide</option>
+        </select>
+
+        <div class="row row--between">
+          <p class="hint">Clock</p>
+          <button class="switch" id="spClock" type="button" role="switch" aria-checked="true" aria-label="Show the clock"></button>
+        </div>
+        <div class="row row--between">
+          <p class="hint">Greeting</p>
+          <button class="switch" id="spGreeting" type="button" role="switch" aria-checked="true" aria-label="Show the greeting"></button>
+        </div>
+        <div class="row row--between">
+          <p class="hint">Date</p>
+          <button class="switch" id="spDate" type="button" role="switch" aria-checked="true" aria-label="Show the date"></button>
+        </div>
+
+        <label class="label" for="spLinks">Quick links</label>
+        <textarea class="input input--area" id="spLinks" rows="3" placeholder="YouTube | https://youtube.com"></textarea>
+        <p class="hint">One per line, as Title | https://address. Up to twelve.</p>
+
+        <div class="row">
+          <button class="btn btn--small" id="spExport" type="button">Export theme</button>
+          <button class="btn btn--small" id="spImportBtn" type="button">Import theme</button>
+          <input id="spImport" type="file" accept="application/json,.json" hidden />
+        </div>
+        <p class="hint" id="spState"></p>
+      </section>
+
+      <section class="field">
+        <div class="field__head">
+          <span class="label">Voice</span>
+          <span class="keystate" id="voiceState" data-state="none">
+            <span class="dot"></span>
+            <span id="voiceStateText">Off</span>
+          </span>
+        </div>
+        <p class="hint">
+          Talk with the mic, and hear replies as they arrive. The mic is hold-to-talk; a quick tap keeps it
+          listening until you tap again. Speaking or pressing the mic stops playback at once.
+        </p>
+
+        <div class="row row--between">
+          <div class="row__text"><p class="hint">Speak replies aloud</p></div>
+          <button class="switch" id="vSpeak" type="button" role="switch" aria-checked="false" aria-label="Speak replies aloud"></button>
+        </div>
+        <div class="row row--between">
+          <div class="row__text"><p class="hint">Hands-free: listen again after each spoken reply</p></div>
+          <button class="switch" id="vHandsFree" type="button" role="switch" aria-checked="false" aria-label="Listen again after each spoken reply"></button>
+        </div>
+
+        <label class="label" for="vVoice">Voice</label>
+        <select class="input" id="vVoice">
+          <option value="">Browser default</option>
+        </select>
+
+        <div class="row row--between">
+          <label class="label" for="vRate">Speed</label>
+          <output class="hint" id="vRateValue">1.00×</output>
+        </div>
+        <input class="range" id="vRate" type="range" min="0.6" max="1.8" step="0.05" value="1" />
+
+        <div class="row row--between">
+          <label class="label" for="vVolume">Volume</label>
+          <output class="hint" id="vVolumeValue">100%</output>
+        </div>
+        <input class="range" id="vVolume" type="range" min="0" max="1" step="0.05" value="1" />
+
+        <label class="label" for="vProvider">Voice engine</label>
+        <select class="input" id="vProvider">
+          <option value="browser">Browser voice (free, offline)</option>
+          <option value="http">Custom voice endpoint</option>
+        </select>
+        <input class="input" id="vEndpoint" placeholder="https://… speech endpoint" autocomplete="off" spellcheck="false" />
+        <input class="input" id="vVoiceKey" type="password" placeholder="Token for that endpoint (optional)" autocomplete="off" />
+        <div class="row">
+          <button class="btn btn--small" id="vSaveEndpoint" type="button">Save endpoint</button>
+          <button class="btn btn--small" id="vTest" type="button">Test voice</button>
+        </div>
+        <p class="hint">
+          Amazon Polly “Justin” is the intended custom voice, and Polly needs a signed request: point this at a
+          small proxy that signs for it. ATOM posts <code>{ text, voice: "Justin", speed, volume }</code> and
+          plays the audio that comes back.
+        </p>
+
+        <label class="label" for="vStt">Speech to text</label>
+        <select class="input" id="vStt">
+          <option value="auto">Automatic — the browser's recognition, Whisper if it has none</option>
+          <option value="browser">Browser recognition only</option>
+          <option value="whisper">Whisper endpoint (uses the Groq key)</option>
+        </select>
+        <p class="hint" id="vSttNote"></p>
+      </section>
+
+      <section class="field">
         <span class="label">Appearance</span>
         <div class="seg" id="theme" role="tablist" aria-label="Appearance">
           <button type="button" data-theme="system" role="tab" aria-selected="true">System</button>
@@ -190,8 +695,31 @@
       </section>
 
       <section class="field">
-        <button class="btn btn--wide" id="clearChat" type="button">Clear conversation</button>
-        <p class="hint hint--center">ATOM 0.2.0 · Phase 2 — reading and acting, with your say-so</p>
+        <span class="label">Graphics</span>
+        <div class="seg" id="perf" role="tablist" aria-label="Graphics mode">
+          <button type="button" data-mode="auto" role="tab" aria-selected="true">Auto</button>
+          <button type="button" data-mode="quality" role="tab" aria-selected="false">Quality</button>
+          <button type="button" data-mode="performance" role="tab" aria-selected="false">Performance</button>
+        </div>
+        <p class="hint" id="perfState"></p>
+      </section>
+
+      <section class="field">
+        <span class="label">Erase</span>
+        <p class="hint">
+          Deletes what is stored on this device — the facts and the transcripts themselves, not a hidden copy.
+          Each takes a second click, because neither can be undone.
+        </p>
+        <div class="row">
+          <button class="btn btn--small" id="eraseMemories" type="button">Forget all memories</button>
+          <button class="btn btn--small" id="eraseChats" type="button">Erase every conversation</button>
+        </div>
+        <p class="hint" id="eraseState"></p>
+      </section>
+
+      <section class="field">
+        <button class="btn btn--wide" id="clearChat" type="button">Delete this conversation</button>
+        <p class="hint hint--center">ATOM 0.3.0 · Phase 3 — console and network, only when you ask</p>
       </section>
     </aside>
 

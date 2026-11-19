@@ -1,71 +1,78 @@
 /**
- * The New Tab page is a doorway: type, hit Enter, and the sidebar opens with
- * the question already sent. Nothing is stored here beyond one pending prompt.
+ * The start page's own script: apply the theme from Settings, draw the clock and
+ * the pinned links, and follow changes live. The conversation is the panel in
+ * the frame; nothing about it is handled here.
  */
+import { normalizeSettings } from '../lib/settings.js';
+import { initWallpapers } from './wallpaper.js';
 
-const form = document.getElementById('ask');
-const input = document.getElementById('q');
-const foot = document.getElementById('foot');
+const clock = document.getElementById('clock');
+const greet = document.getElementById('greet');
+const date = document.getElementById('date');
+const links = document.getElementById('links');
+const bg = document.getElementById('bg');
 
-document.getElementById('greet').textContent = greeting();
-applyStoredTheme();
+let current = normalizeSettings(null).startpage;
 
-form.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const text = input.value.trim();
-  if (!text) return;
-
-  if (typeof chrome === 'undefined' || !chrome.storage?.local || !chrome.sidePanel) {
-    foot.textContent = 'This is a static preview — load the extension to use the sidebar.';
-    return;
-  }
-
-  try {
-    await chrome.storage.local.set({ 'atom.pending': { text, at: Date.now() } });
-  } catch {
-    foot.textContent = "Couldn't hand that to the sidebar.";
-    return;
-  }
-
-  let opened = true;
-  try {
-    await chrome.sidePanel.open({ windowId: chrome.windows.WINDOW_ID_CURRENT });
-  } catch {
-    opened = false;
-  }
-
-  input.value = '';
-  if (!opened) foot.textContent = 'Open ATOM from the toolbar and it will pick that up.';
-  input.focus();
+apply();
+// Wallpapers are independent of the theme: they are their own layer, with their
+// own storage, and they never block the page from being usable.
+initWallpapers().catch(() => {});
+chrome.storage?.onChanged?.addListener((changes, area) => {
+  if (area === 'local' && changes['atom.settings']) apply();
 });
+setInterval(tick, 1000);
 
-document.addEventListener('keydown', (event) => {
-  if (event.key === '/' && document.activeElement !== input) {
-    event.preventDefault();
-    input.focus();
-  }
-});
-
-function greeting() {
-  const hour = new Date().getHours();
-  if (hour < 5) return 'Still awake?';
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
-}
-
-/** Keep the New Tab page on the same theme the sidebar uses. */
-async function applyStoredTheme() {
-  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  if (typeof chrome === 'undefined' || !chrome.storage?.local) return;
-
+async function apply() {
   try {
     const stored = await chrome.storage.local.get('atom.settings');
-    const preference = stored?.['atom.settings']?.theme || 'system';
-    if (preference === 'system') return;
-    document.documentElement.dataset.theme = preference;
+    current = normalizeSettings(stored?.['atom.settings']).startpage;
   } catch {
-    /* fall back to the system preference already applied */
+    /* the defaults already applied */
   }
+  render();
+}
+
+function render() {
+  const theme = current;
+  document.body.dataset.background = theme.background;
+  document.body.dataset.font = theme.font;
+  document.body.dataset.width = theme.width;
+  document.documentElement.style.setProperty('--sp-accent', theme.accent);
+  document.documentElement.style.setProperty('--sp-color', theme.color);
+
+  // A picture is either a data URL the user uploaded or an https address; both
+  // were validated when they were saved.
+  bg.style.backgroundImage = theme.background === 'image' && theme.image ? `url("${theme.image}")` : '';
+
+  clock.hidden = !theme.clock;
+  greet.hidden = !theme.greeting;
+  date.hidden = !theme.date;
+  links.hidden = theme.links.length === 0;
+  links.replaceChildren(
+    ...theme.links.map((link) => {
+      const anchor = document.createElement('a');
+      anchor.href = link.url;
+      anchor.textContent = link.title;
+      anchor.target = '_blank';
+      anchor.rel = 'noreferrer noopener';
+      return anchor;
+    }),
+  );
+
+  tick();
+}
+
+function tick() {
+  const now = new Date();
+  clock.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  greet.textContent = greeting(now.getHours());
+  date.textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+function greeting(hour) {
+  if (hour < 5) return 'Still awake?';
+  if (hour < 12) return 'Good morning.';
+  if (hour < 18) return 'Good afternoon.';
+  return 'Good evening.';
 }

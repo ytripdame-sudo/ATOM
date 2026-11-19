@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "ATOM",
   "short_name": "ATOM",
-  "version": "0.2.0",
-  "description": "A private assistant in your sidebar. Ask anything, read the page you're on, and act on it when you say so.",
+  "version": "0.4.0",
+  "description": "A private browsing agent in your sidebar. Ask anything, read the page you're on, and let it work across your tabs when you say so.",
   "minimum_chrome_version": "116",
   "icons": {
     "16": "icons/icon16.png",
@@ -28,15 +28,43 @@
   "chrome_url_overrides": {
     "newtab": "newtab/index.html"
   },
-  "permissions": ["storage", "sidePanel", "tabs", "scripting"],
-  "host_permissions": ["https://api.groq.com/*"],
-  "optional_host_permissions": ["*://*/*"],
+  "sandbox": {
+    "pages": ["newtab/wall-frame.html"]
+  },
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage",
+    "unlimitedStorage",
+    "cookies",
+    "history",
+    "bookmarks",
+    "downloads",
+    "webNavigation",
+    "tabGroups",
+    "sidePanel",
+    "clipboardRead",
+    "clipboardWrite",
+    "notifications",
+    "alarms",
+    "contextMenus",
+    "search",
+    "offscreen",
+    "debugger"
+  ],
+  "host_permissions": ["<all_urls>"],
   "commands": {
     "open-atom": {
       "suggested_key": {
         "default": "Alt+Shift+A"
       },
       "description": "Open ATOM in the side panel"
+    },
+    "stop-agent": {
+      "suggested_key": {
+        "default": "Alt+Shift+X"
+      },
+      "description": "Stop whatever ATOM is doing"
     }
   },
   "content_security_policy": {

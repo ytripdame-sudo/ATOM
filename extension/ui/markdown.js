@@ -5,6 +5,8 @@
  * can never inject markup. Links are limited to http(s).
  */
 
+import { highlight } from '../lib/highlight.js';
+
 const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
 export function escapeHtml(value) {
@@ -119,7 +121,7 @@ function codeBlock(code, language) {
     '<div class="code">' +
     `<div class="code__bar"><span class="code__lang">${label}</span>` +
     '<button class="code__copy" type="button" data-copy>Copy</button></div>' +
-    `<pre><code>${escapeHtml(code)}</code></pre>` +
+    `<pre><code class="lang-${label}">${highlight(code, language)}</code></pre>` +
     '</div>'
   );
 }
